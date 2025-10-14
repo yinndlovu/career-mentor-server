@@ -4,8 +4,13 @@ const express = require("express");
 const http = require("http");
 const sequelize = require("./db");
 
+const authRoutes = require("./routes/auth/authRoutes");
+
 const app = express();
+app.set("trust proxy", 1);
 const server = http.createServer(app);
+
+app.use("/api", authRoutes);
 
 sequelize
   .authenticate()
