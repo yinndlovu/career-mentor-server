@@ -19,7 +19,7 @@ exports.createUser = async (fullNames, surname = null, email, password) => {
 
 exports.findByEmail = async (email) => {
   const user = await User.findOne({
-    where: { email }
+    where: { email },
   });
 
   return user;
