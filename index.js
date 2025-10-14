@@ -7,7 +7,11 @@ const sequelize = require("./db");
 const authRoutes = require("./routes/auth/authRoutes");
 
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.set("trust proxy", 1);
+
 const server = http.createServer(app);
 
 app.use("/api", authRoutes);
