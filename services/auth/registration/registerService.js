@@ -1,7 +1,11 @@
-const userRepository = require("../../../repositories/userRepository");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+// internal
+const userRepository = require("../../../repositories/userRepository");
+const registrationOtpRepository = require("../../../repositories/registrationOtpRepository");
+
+// modules
 const { validateEmail } = require("../../../validators/validateEmail");
 const { validatePassword } = require("../../../validators/validatePassword");
 
@@ -53,6 +57,12 @@ exports.register = async (fullNames, surname, email, password) => {
     hashedPassword
   );
 
+  const otp = Math.floor(1000 + Math.random() * 900000).toString();
+  const hashedOtp = await bcrypt.hash(otp, 10);
+
+  await registrationOtpRepository.upsertOtp(hashedOtp, user.id);
+  console.log("REGISTRATION OTP FOR " + email + ": " + otp);
+
   const token = jwt.sign(
     {
       id: user.id,
@@ -64,7 +74,7 @@ exports.register = async (fullNames, surname, email, password) => {
   );
 
   return {
-    message: "You have successfully registered.",
+    message: "Successfully registered.",
     userId: user.id,
     fullNames: user.fullNames,
     surname: user.surname,

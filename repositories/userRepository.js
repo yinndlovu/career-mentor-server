@@ -17,10 +17,20 @@ exports.createUser = async (fullNames, surname = null, email, password) => {
   };
 };
 
+exports.findById = async (userId) => {
+  const user = User.findByPk(userId);
+
+  return user;
+};
+
 exports.findByEmail = async (email) => {
   const user = await User.findOne({
     where: { email },
   });
 
   return user;
+};
+
+exports.save = async (user) => {
+  return await user.save();
 };

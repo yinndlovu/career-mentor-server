@@ -29,7 +29,12 @@ const User = sequelize.define("User", {
   pushToken: {
     type: DataTypes.STRING,
     allowNull: true,
-  }
+  },
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 });
 
 module.exports = User;
