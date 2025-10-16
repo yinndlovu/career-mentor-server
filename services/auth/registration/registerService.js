@@ -75,10 +75,6 @@ exports.register = async (fullNames, surname, email, password) => {
 
   return {
     message: "Successfully registered.",
-    userId: user.id,
-    fullNames: user.fullNames,
-    surname: user.surname,
-    email: user.email,
     token: token,
   };
 };
