@@ -1,13 +1,13 @@
 const sequelize = require("sequelize");
 const User = require("./User");
-const RegistrationOtp = require("./RegistrationOtp");
+const Otp = require("./Otp");
 
-User.hasOne(RegistrationOtp, {
+User.hasOne(Otp, {
   foreignKey: "userId",
   onDelete: "CASCADE",
 });
 
-RegistrationOtp.belongsTo(RegistrationOtp, {
+Otp.belongsTo(Otp, {
   foreignKey: "userId",
   onDelete: "CASCADE",
 });
@@ -15,5 +15,5 @@ RegistrationOtp.belongsTo(RegistrationOtp, {
 module.exports = {
   sequelize,
   User,
-  RegistrationOtp,
+  Otp,
 };
