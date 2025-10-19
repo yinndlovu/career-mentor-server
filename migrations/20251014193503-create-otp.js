@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("RegistrationOtps", {
+    await queryInterface.createTable("Otps", {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -16,6 +16,14 @@ module.exports = {
       },
       expiresAt: {
         type: Sequelize.DATE,
+        allowNull: false,
+      },
+      type: {
+        type: Sequelize.ENUM(
+          "email_verification",
+          "password_reset",
+          "two_factor"
+        ),
         allowNull: false,
       },
       userId: {
@@ -39,6 +47,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("RegistrationOtps");
+    await queryInterface.dropTable("Otps");
   },
 };

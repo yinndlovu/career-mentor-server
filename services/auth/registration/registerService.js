@@ -3,7 +3,8 @@ const bcrypt = require("bcrypt");
 
 // internal
 const userRepository = require("../../../repositories/userRepository");
-const registrationOtpRepository = require("../../../repositories/registrationOtpRepository");
+const otpRepository = require("../../../repositories/otpRepository");
+const OtpTypes = require("../../../models/enums/otpTypes");
 
 // modules
 const { validateEmail } = require("../../../validators/validateEmail");
@@ -60,21 +61,14 @@ exports.register = async (fullNames, surname, email, password) => {
   const otp = Math.floor(1000 + Math.random() * 900000).toString();
   const hashedOtp = await bcrypt.hash(otp, 10);
 
-  await registrationOtpRepository.upsertOtp(hashedOtp, user.id);
-  console.log("REGISTRATION OTP FOR " + email + ": " + otp);
-
-  const token = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      tokenVersion: user.tokenVersion,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "90d" }
+  await otpRepository.upsertOtp(
+    hashedOtp,
+    user.id,
+    OtpTypes.EMAIL_VERIFICATION
   );
+  console.log("REGISTRATION OTP FOR " + email + ": " + otp);
 
   return {
     message: "Successfully registered.",
-    token: token,
   };
 };

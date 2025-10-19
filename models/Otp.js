@@ -1,13 +1,17 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
 
-const RegistrationOtp = sequelize.define("RegistrationOtp", {
+const Otp = sequelize.define("Otp", {
   otp: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   expiresAt: {
     type: DataTypes.DATE,
+    allowNull: false,
+  },
+  type: {
+    type: DataTypes.ENUM("email_verification", "password_reset", "two_factor"),
     allowNull: false,
   },
   userId: {
@@ -21,4 +25,4 @@ const RegistrationOtp = sequelize.define("RegistrationOtp", {
   },
 });
 
-module.exports = RegistrationOtp;
+module.exports = Otp;
