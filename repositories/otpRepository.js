@@ -38,3 +38,7 @@ exports.findByUserId = async (userId) => {
 exports.save = async (otp) => {
   return await otp.save();
 };
+
+exports.deleteByUserAndType = async (userId, type) => {
+  return await Otp.destroy({ where: { userId, type } });
+};
