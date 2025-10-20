@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const userRepository = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
 const OtpTypes = require("../../../models/enums/otpTypes");
+const TokenTypes = require("../enums/tokenTypes");
 
 // modules
 const { validateEmail } = require("../../../validators/validateEmail");
@@ -68,7 +69,19 @@ exports.register = async (fullNames, surname, email, password) => {
   );
   console.log("REGISTRATION OTP FOR " + email + ": " + otp);
 
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      tokenVersion: user.tokenVersion,
+      tokenType: TokenTypes.EMAIL_VERIFICATIONTOKEN,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+
   return {
     message: "Successfully registered.",
+    token: token,
   };
 };

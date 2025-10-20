@@ -5,11 +5,12 @@ const dotenv = require("dotenv");
 const userRepo = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
 const OtpTypes = require("../../../models/enums/otpTypes");
+const TokenTypes = require("../enums/tokenTypes");
 
 dotenv.config();
 
 exports.Login = async (email, password) => {
-  const user = userRepo.findByEmail(email);
+  const user = await userRepo.findByEmail(email);
 
   if (!user) {
     throw {
@@ -18,7 +19,7 @@ exports.Login = async (email, password) => {
     };
   }
 
-  isPasswordValid = bcrypt.compareSync(password, user.password);
+  const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
     throw {
       status: 403,
@@ -30,8 +31,21 @@ exports.Login = async (email, password) => {
   const hashedOtp = await bcrypt.hash(otp, 10);
 
   await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR);
+  console.log(`LOGIN OTP for ${email}: ${otp}`);
+
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      tokenVersion: user.tokenVersion,
+      tokenType: TokenTypes.LOGIN_TOKEN,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "10m" }
+  );
 
   return {
-    message: "Successfully registered.",
+    message: "OTP sent for login verification.",
+    token: token,
   };
 };

@@ -6,6 +6,7 @@ const dotenv = require("dotenv");
 const otpRepository = require("../../../repositories/otpRepository");
 const userRepository = require("../../../repositories/userRepository");
 const OtpTypes = require("../../../models/enums/otpTypes");
+const TokenTypes = require("../enums/tokenTypes");
 
 dotenv.config();
 
@@ -61,11 +62,14 @@ exports.verifyRegistrationOtp = async (userId, otp) => {
   user.isVerified = true;
   await userRepository.save(user);
 
+  await otpRepository.deleteByUserAndType(user.id, OtpTypes.EMAIL_VERIFICATION);
+
   const token = jwt.sign(
     {
       id: user.id,
       email: user.email,
       tokenVersion: user.tokenVersion,
+      tokenType: TokenTypes.ACCESSTOKEN,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" }
@@ -119,11 +123,14 @@ exports.verifyLoginOtp = async (userId, otp) => {
     };
   }
 
+  await otpRepository.deleteByUserAndType(user.id, OtpTypes.TWO_FACTOR);
+
   const token = jwt.sign(
     {
       id: user.id,
       email: user.email,
       tokenVersion: user.tokenVersion,
+      tokenType: TokenTypes.ACCESSTOKEN,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" }
@@ -177,11 +184,14 @@ exports.verifyPasswordResetOtp = async (userId, otp) => {
     };
   }
 
+  await otpRepository.deleteByUserAndType(user.id, OtpTypes.PASSWORD_RESET);
+
   const token = jwt.sign(
     {
       id: user.id,
       email: user.email,
       tokenVersion: user.tokenVersion,
+      tokenType: TokenTypes.ACCESSTOKEN,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" }
