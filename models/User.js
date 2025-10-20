@@ -35,6 +35,11 @@ const User = sequelize.define("User", {
     allowNull: false,
     defaultValue: false,
   },
+  tokenVersion: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
 });
 
 module.exports = User;
