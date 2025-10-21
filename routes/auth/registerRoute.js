@@ -3,14 +3,14 @@ const router = express.Router();
 
 // internal
 const registerController = require("../../controllers/auth/registration/registerController");
-const verifyToken = require("../../middlewares/verifyToken");
+const verifyOtpToken = require("../../middlewares/verifyOtpToken");
 const verifyOtpController = require("../../controllers/auth/verification/verifyOtpController");
 
 router.post("/register", registerController.register);
 
 router.patch(
   "/register/verify",
-  verifyToken,
+  verifyOtpToken,
   verifyOtpController.verifyRegistrationOtp
 );
 
