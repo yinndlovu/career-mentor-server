@@ -5,6 +5,7 @@ const userRepository = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
 const OtpTypes = require("../../../enums/otpTypes");
 const TokenTypes = require("../../../enums/tokenTypes");
+const { generateOtp } = require("../../../utils/otpGenerator");
 
 exports.login = async (email, password) => {
   const user = await userRepository.findByEmail(email);
@@ -24,8 +25,25 @@ exports.login = async (email, password) => {
     };
   }
 
-  const otp = Math.floor(1000 + Math.random() * 900000).toString();
-  const hashedOtp = await bcrypt.hash(otp, 10);
+  if (!user.isVerified) {
+    const { otp, hashedOtp } = generateOtp();
+
+    await otpRepository.upsertOtp(
+      hashedOtp,
+      user.id,
+      OtpTypes.EMAIL_VERIFICATION,
+      60
+    );
+
+    console.log("REGISTRATION OTP FOR " + email + ": " + otp);
+
+    return {
+      shouldVerify: true,
+      message: "Please verify your account to continue.",
+    };
+  }
+
+  const { otp, hashedOtp } = generateOtp();
 
   await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR, 10);
   console.log(`LOGIN OTP for ${email}: ${otp}`);
