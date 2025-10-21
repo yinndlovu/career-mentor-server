@@ -8,7 +8,7 @@ const verifyOtpController = require("../../controllers/auth/verification/verifyO
 
 router.post("/register", registerController.register);
 
-router.patch(
+router.post(
   "/register/verify",
   verifyOtpToken,
   verifyOtpController.verifyRegistrationOtp
