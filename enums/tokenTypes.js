@@ -1,5 +1,5 @@
 const TokenTypes = Object.freeze({
-  ACCESSTOKEN: "accessToken",
+  ACCESS_TOKEN: "access_token",
   LOGIN_TOKEN: "login_token",
   EMAIL_VERIFICATIONTOKEN: "email_verificationToken",
   PASSWORD_RESETTOKEN: "password_resettoken",

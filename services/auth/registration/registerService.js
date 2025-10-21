@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const userRepository = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
 const OtpTypes = require("../../../models/enums/otpTypes");
-const TokenTypes = require("../enums/tokenTypes");
+const TokenTypes = require("../../../enums/tokenTypes");
 
 // modules
 const { validateEmail } = require("../../../validators/validateEmail");

@@ -1,13 +1,10 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
 
 const userRepo = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
-const OtpTypes = require("../../../models/enums/otpTypes");
-const TokenTypes = require("../enums/tokenTypes");
-
-dotenv.config();
+const OtpTypes = require("../../../enums/otpTypes");
+const TokenTypes = require("../../../enums/tokenTypes");
 
 exports.Login = async (email, password) => {
   const user = await userRepo.findByEmail(email);

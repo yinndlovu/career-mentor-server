@@ -1,16 +1,9 @@
 const verifyOtpService = require("../../../services/auth/verification/verifyOtpService");
-const TokenTypes = require("../../../services/auth/enums/tokenTypes");
 
 exports.verifyRegistrationOtp = async (req, res) => {
   const userId = req.user.id;
-  const tokenType = req.user.tokenType;
   const { otp } = req.body;
 
-  if (tokenType !== TokenTypes.EMAIL_VERIFICATIONTOKEN) {
-    return res.status(403).json({
-      message: "Invalid token type.",
-    });
-  }
   try {
     const result = await verifyOtpService.verifyRegistrationOtp(userId, otp);
 
@@ -24,14 +17,8 @@ exports.verifyRegistrationOtp = async (req, res) => {
 
 exports.verifyLoginOtp = async (req, res) => {
   const userId = req.user.id;
-  const tokenType = req.user.tokenType;
   const { otp } = req.body;
 
-  if (tokenType !== TokenTypes.LOGIN_TOKEN) {
-    return res.status(403).json({
-      message: "Invalid token type.",
-    });
-  }
   try {
     const result = await verifyOtpService.verifyLoginOtp(userId, otp);
 
@@ -45,14 +32,8 @@ exports.verifyLoginOtp = async (req, res) => {
 
 exports.verifyPasswordRestOtp = async (req, res) => {
   const userId = req.user.id;
-  const tokenType = req.user.tokenType;
   const { otp } = req.body;
 
-  if (tokenType !== TokenTypes.PASSWORD_RESETTOKEN) {
-    return res.status(403).json({
-      message: "Invalid token type.",
-    });
-  }
   try {
     const result = await verifyOtpService.verifyPasswordResetOtp(userId, otp);
 

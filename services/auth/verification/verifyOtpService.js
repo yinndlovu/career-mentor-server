@@ -5,8 +5,8 @@ const dotenv = require("dotenv");
 // internal
 const otpRepository = require("../../../repositories/otpRepository");
 const userRepository = require("../../../repositories/userRepository");
-const OtpTypes = require("../../../models/enums/otpTypes");
-const TokenTypes = require("../enums/tokenTypes");
+const OtpTypes = require("../../../enums/otpTypes");
+const TokenTypes = require("../../../enums/tokenTypes");
 
 dotenv.config();
 
@@ -69,7 +69,7 @@ exports.verifyRegistrationOtp = async (userId, otp) => {
       id: user.id,
       email: user.email,
       tokenVersion: user.tokenVersion,
-      tokenType: TokenTypes.ACCESSTOKEN,
+      tokenType: TokenTypes.ACCESS_TOKEN,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" }
@@ -130,7 +130,7 @@ exports.verifyLoginOtp = async (userId, otp) => {
       id: user.id,
       email: user.email,
       tokenVersion: user.tokenVersion,
-      tokenType: TokenTypes.ACCESSTOKEN,
+      tokenType: TokenTypes.ACCESS_TOKEN,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" }
@@ -191,7 +191,7 @@ exports.verifyPasswordResetOtp = async (userId, otp) => {
       id: user.id,
       email: user.email,
       tokenVersion: user.tokenVersion,
-      tokenType: TokenTypes.ACCESSTOKEN,
+      tokenType: TokenTypes.ACCESS_TOKEN,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" }
