@@ -2,10 +2,15 @@ const verifyOtpService = require("../../../services/auth/verification/verifyOtpS
 
 exports.verifyRegistrationOtp = async (req, res) => {
   const userId = req.user.id;
+  const tokenType = req.user.tokenType;
   const { otp } = req.body;
 
   try {
-    const result = await verifyOtpService.verifyRegistrationOtp(userId, otp);
+    const result = await verifyOtpService.verifyRegistrationOtp(
+      userId,
+      otp,
+      tokenType
+    );
 
     res.status(200).json(result);
   } catch (err) {
@@ -17,10 +22,15 @@ exports.verifyRegistrationOtp = async (req, res) => {
 
 exports.verifyLoginOtp = async (req, res) => {
   const userId = req.user.id;
+  const tokenType = req.user.tokenType;
   const { otp } = req.body;
 
   try {
-    const result = await verifyOtpService.verifyLoginOtp(userId, otp);
+    const result = await verifyOtpService.verifyLoginOtp(
+      userId,
+      otp,
+      tokenType
+    );
 
     res.status(200).json(result);
   } catch (err) {
@@ -32,10 +42,15 @@ exports.verifyLoginOtp = async (req, res) => {
 
 exports.verifyPasswordRestOtp = async (req, res) => {
   const userId = req.user.id;
+  const tokenType = req.user.tokenType;
   const { otp } = req.body;
 
   try {
-    const result = await verifyOtpService.verifyPasswordResetOtp(userId, otp);
+    const result = await verifyOtpService.verifyPasswordResetOtp(
+      userId,
+      otp,
+      tokenType
+    );
 
     res.status(200).json(result);
   } catch (err) {

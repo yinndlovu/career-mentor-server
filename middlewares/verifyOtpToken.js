@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const userRepository = require("../repositories/userRepository");
-const TokenTypes = require("../enums/tokenTypes");
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -16,27 +15,10 @@ const verifyToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await userRepository.findById(decoded.id);
+    
     if (!user) {
       return res.status(403).json({
         error: "User not found.",
-      });
-    }
-
-    if (decoded.tokenType !== TokenTypes.ACCESS_TOKEN) {
-      return res.status(403).json({
-        error: "Invalid token, please log in again.",
-      });
-    }
-
-    if (decoded.tokenVersion !== user.tokenVersion) {
-      return res.status(403).json({
-        error: "Session expired, please log in again.",
-      });
-    }
-
-    if (decoded.email !== user.email) {
-      return res.status(403).json({
-        error: "Email mismatch.",
       });
     }
 

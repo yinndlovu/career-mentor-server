@@ -4,9 +4,9 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await loginService.Login(email, password);
+    const result = await loginService.login(email, password);
 
-    res.status(201).json(result);
+    res.status(200).json(result);
   } catch (err) {
     res
       .status(err.status || 500)

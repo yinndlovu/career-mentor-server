@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const userRepo = require("../../../repositories/userRepository");
+const userRepository = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
 const OtpTypes = require("../../../enums/otpTypes");
 const TokenTypes = require("../../../enums/tokenTypes");
 
-exports.Login = async (email, password) => {
-  const user = await userRepo.findByEmail(email);
+exports.login = async (email, password) => {
+  const user = await userRepository.findByEmail(email);
 
   if (!user) {
     throw {
@@ -27,14 +27,12 @@ exports.Login = async (email, password) => {
   const otp = Math.floor(1000 + Math.random() * 900000).toString();
   const hashedOtp = await bcrypt.hash(otp, 10);
 
-  await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR);
+  await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR, 10);
   console.log(`LOGIN OTP for ${email}: ${otp}`);
 
   const token = jwt.sign(
     {
       id: user.id,
-      email: user.email,
-      tokenVersion: user.tokenVersion,
       tokenType: TokenTypes.LOGIN_TOKEN,
     },
     process.env.JWT_SECRET,
