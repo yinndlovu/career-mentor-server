@@ -1,29 +1,18 @@
 const { Otp } = require("../models");
-const OtpTypes = require("../models/enums/otpTypes");
 
-exports.upsertOtp = async (otp, userId, type) => {
-  let expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+exports.upsertOtp = async (otp, userId, type, expiryMinutes = 5) => {
+  let expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
-  if (type === OtpTypes.EMAIL_VERIFICATION) {
-    expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-  }
-
-  let otpRecord = await Otp.findOne({
-    where: { userId },
-  });
+  let otpRecord = await Otp.findOne({ where: { userId, type } });
 
   if (otpRecord) {
     otpRecord.otp = otp;
     otpRecord.expiresAt = expiresAt;
+    otpRecord.type = type;
 
-    otpRecord.save();
+    await otpRecord.save();
   } else {
-    Otp.create({
-      otp,
-      userId,
-      expiresAt,
-      type,
-    });
+    await Otp.create({ otp, userId, expiresAt, type });
   }
 };
 

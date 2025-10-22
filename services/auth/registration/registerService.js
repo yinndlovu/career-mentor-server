@@ -4,12 +4,13 @@ const bcrypt = require("bcrypt");
 // internal
 const userRepository = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
-const OtpTypes = require("../../../models/enums/otpTypes");
-const TokenTypes = require("../enums/tokenTypes");
+const OtpTypes = require("../../../enums/otpTypes");
+const TokenTypes = require("../../../enums/tokenTypes");
 
 // modules
 const { validateEmail } = require("../../../validators/validateEmail");
 const { validatePassword } = require("../../../validators/validatePassword");
+const { generateOtp } = require("../../../utils/otpGenerator");
 
 exports.register = async (fullNames, surname, email, password) => {
   const trimmedEmail = email ? email.trim() : "";
@@ -59,25 +60,24 @@ exports.register = async (fullNames, surname, email, password) => {
     hashedPassword
   );
 
-  const otp = Math.floor(1000 + Math.random() * 900000).toString();
-  const hashedOtp = await bcrypt.hash(otp, 10);
+  const { otp, hashedOtp } = generateOtp();
 
   await otpRepository.upsertOtp(
     hashedOtp,
     user.id,
-    OtpTypes.EMAIL_VERIFICATION
+    OtpTypes.EMAIL_VERIFICATION,
+    60
   );
+
   console.log("REGISTRATION OTP FOR " + email + ": " + otp);
 
   const token = jwt.sign(
     {
       id: user.id,
-      email: user.email,
-      tokenVersion: user.tokenVersion,
-      tokenType: TokenTypes.EMAIL_VERIFICATIONTOKEN,
+      tokenType: TokenTypes.EMAIL_VERIFICATION_TOKEN,
     },
     process.env.JWT_SECRET,
-    { expiresIn: "30d" }
+    { expiresIn: "7d" }
   );
 
   return {

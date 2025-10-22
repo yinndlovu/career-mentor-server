@@ -1,16 +1,14 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
 
-const userRepo = require("../../../repositories/userRepository");
+const userRepository = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
-const OtpTypes = require("../../../models/enums/otpTypes");
-const TokenTypes = require("../enums/tokenTypes");
+const OtpTypes = require("../../../enums/otpTypes");
+const TokenTypes = require("../../../enums/tokenTypes");
+const { generateOtp } = require("../../../utils/otpGenerator");
 
-dotenv.config();
-
-exports.Login = async (email, password) => {
-  const user = await userRepo.findByEmail(email);
+exports.login = async (email, password) => {
+  const user = await userRepository.findByEmail(email);
 
   if (!user) {
     throw {
@@ -27,17 +25,32 @@ exports.Login = async (email, password) => {
     };
   }
 
-  const otp = Math.floor(1000 + Math.random() * 900000).toString();
-  const hashedOtp = await bcrypt.hash(otp, 10);
+  if (!user.isVerified) {
+    const { otp, hashedOtp } = generateOtp();
 
-  await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR);
+    await otpRepository.upsertOtp(
+      hashedOtp,
+      user.id,
+      OtpTypes.EMAIL_VERIFICATION,
+      60
+    );
+
+    console.log("REGISTRATION OTP FOR " + email + ": " + otp);
+
+    return {
+      shouldVerify: true,
+      message: "Please verify your account to continue.",
+    };
+  }
+
+  const { otp, hashedOtp } = generateOtp();
+
+  await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR, 10);
   console.log(`LOGIN OTP for ${email}: ${otp}`);
 
   const token = jwt.sign(
     {
       id: user.id,
-      email: user.email,
-      tokenVersion: user.tokenVersion,
       tokenType: TokenTypes.LOGIN_TOKEN,
     },
     process.env.JWT_SECRET,
