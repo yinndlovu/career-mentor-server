@@ -44,7 +44,7 @@ exports.login = async (email, password) => {
     };
   }
 
-  const { otp, hashedOtp } = generateOtp();
+  const { otp, hashedOtp } = await generateOtp();
 
   await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR, 10);
   console.log(`LOGIN OTP for ${email}: ${otp}`);
