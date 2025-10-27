@@ -1,0 +1,111 @@
+// file: universalResumeTemplate.ts
+
+/**
+ * Defines the comprehensive structure for a universal resume template,
+ * suitable for parsing and analysis by an AI service.
+ */
+export interface UniversalResumeTemplate {
+  personal_details?: {
+    full_name?: string;
+    title_or_position?: string;
+    photo_url?: string;
+    contact?: {
+      phone?: string;
+      email?: string;
+      address?: string;
+      linkedin?: string;
+      github?: string;
+      website_or_portfolio?: string;
+      /** Other relevant social media links (e.g., Twitter, Medium). */
+      social_links?: string[];
+    };
+  };
+
+  summary?: string;
+  objectives?: string;
+  experience?: Array<{
+    title?: string;
+    organization?: string;
+    industry?: string;
+    location?: string;
+    employment_type?: string;
+    start_date?: string;
+    end_date?: string;
+    currently_working?: boolean;
+    description?: string;
+    responsibilities?: string[];
+    achievements?: string[];
+    technologies_used?: string[];
+  }>;
+  education?: Array<{
+    institution?: string;
+    degree_or_certification?: string;
+    field_of_study?: string;
+    location?: string;
+    start_date?: string;
+    end_date?: string;
+    gpa_or_grade?: string;
+    relevant_coursework?: string[];
+    thesis_or_project?: string;
+  }>;
+  projects?: Array<{
+    name?: string;
+    role?: string;
+    organization_or_context?: string;
+    dates?: string;
+    technologies?: string[];
+    description?: string;
+    achievements?: string[];
+    url?: string;
+  }>;
+  certifications?: Array<{
+    name?: string;
+    issuer?: string;
+    issue_date?: string;
+    expiry_date?: string;
+    credential_id?: string;
+    url?: string;
+  }>;
+  skills?: {
+    technical?: string[];
+    soft?: string[];
+    languages?: string[];
+    frameworks_or_libraries?: string[];
+    tools_or_platforms?: string[];
+    other?: string[];
+  };
+  awards_and_achievements?: Array<{
+    name?: string;
+    issuer?: string;
+    date?: string;
+    description?: string;
+  }>;
+  volunteer_experience?: Array<{
+    role?: string;
+    organization?: string;
+    location?: string;
+    dates?: string;
+    description?: string;
+  }>;
+  publications?: Array<{
+    title?: string;
+    publisher?: string;
+    date?: string;
+    url?: string;
+    description?: string;
+  }>;
+  memberships?: Array<{
+    organization?: string;
+    role?: string;
+    dates?: string;
+    description?: string;
+  }>;
+  references?: Array<{
+    name?: string;
+    title_or_position?: string;
+    organization?: string;
+    relationship?: string;
+    phone?: string;
+    email?: string;
+  }>;
+}

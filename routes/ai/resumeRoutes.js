@@ -6,5 +6,6 @@ const router = express.Router();
 
 router.post("/create", pdfUploadMiddleware, resumeController.resumeTemplate);
 router.post("/analysis", resumeController.resumeAnalysis);
+router.post("/tailored", resumeController.tailoredResume);
 
 module.exports = router;
