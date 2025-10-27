@@ -5,6 +5,7 @@ const http = require("http");
 const sequelize = require("./db");
 const cors = require("cors");
 
+// routes
 const authRoutes = require("./routes/auth/authRoutes");
 const aiRoutes = require("./routes/ai/aiRoutes");
 
