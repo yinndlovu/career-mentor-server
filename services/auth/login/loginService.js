@@ -27,7 +27,7 @@ exports.login = async (email, password) => {
   }
 
   if (!user.isVerified) {
-    const { otp, hashedOtp } = generateOtp();
+    const { otp, hashedOtp } = await generateOtp();
 
     await otpRepository.upsertOtp(
       hashedOtp,
