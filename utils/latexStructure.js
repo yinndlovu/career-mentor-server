@@ -158,13 +158,6 @@ module.exports = `\\documentclass[letterpaper,11pt]{article}
   }}
 \\end{itemize}
 
-%------ REFERENCES ------
-\\section{References}
-\\resumeSubHeadingListStart
-  \\resumeSubheading
-    {Lethabo Molefe}{Technical Lead Dev , Informatics Community Engagement Programme}
-    {Email: \\href{mailto:lethabomolefe69@gmail.com}{lethabomolefe69@gmail.com}}{Phone: 0629544112}
-\\resumeSubHeadingListEnd
 
 \\end{document}
 `;

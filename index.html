@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF File Uploader</title>
+    <!-- Load Tailwind CSS from CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Custom font */
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f7f9fc;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex items-center justify-center p-4">
+    <div
+      id="app"
+      class="w-full max-w-lg bg-white p-8 rounded-xl shadow-2xl border border-gray-100"
+    >
+      <!-- Title and Description -->
+      <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">
+        Upload Your PDF
+      </h1>
+      <p class="text-gray-500 mb-6 text-center">
+        Select a PDF file to send to the server endpoint.
+      </p>
+
+      <!-- File Input Form -->
+      <form id="uploadForm" class="space-y-6">
+        <!-- File Input -->
+        <div>
+          <label
+            for="pdfFile"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Select File (Only .pdf)
+          </label>
+          <input
+            type="file"
+            id="pdfFile"
+            name="pdfFile"
+            accept="application/pdf"
+            required
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+          />
+        </div>
+
+        <!-- Endpoint Display -->
+        <div class="p-3 bg-gray-50 rounded-lg text-sm">
+          <p class="font-medium text-gray-700">Target Endpoint (Updated):</p>
+          <code id="targetEndpoint" class="text-indigo-600 font-mono break-all"
+            >http://localhost:3000/upload-pdf</code
+          >
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          id="submitBtn"
+          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:bg-indigo-300"
+        >
+          <span id="buttonText">Upload PDF</span>
+          <svg
+            id="spinner"
+            class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Result/Message Box -->
+      <div id="messageBox" class="mt-6 p-4 rounded-lg hidden" role="alert">
+        <p id="messageText" class="font-medium"></p>
+        <pre
+          id="responseText"
+          class="mt-2 text-xs overflow-auto max-h-40"
+        ></pre>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("uploadForm");
+      const fileInput = document.getElementById("pdfFile");
+      const messageBox = document.getElementById("messageBox");
+      const messageText = document.getElementById("messageText");
+      const responseText = document.getElementById("responseText");
+      const submitBtn = document.getElementById("submitBtn");
+      const buttonText = document.getElementById("buttonText");
+      const spinner = document.getElementById("spinner");
+
+      // Target endpoint has been corrected to match the server configuration
+      const UPLOAD_URL = "http://localhost:3600/api/ai/resume/create";
+
+      // Function to update the UI state (e.g., loading, success, error)
+      function updateUI(state, message, responseData = null) {
+        // Reset state
+        messageBox.classList.remove(
+          "hidden",
+          "bg-green-100",
+          "text-green-800",
+          "bg-red-100",
+          "text-red-800"
+        );
+        messageText.classList.remove("text-green-800", "text-red-800");
+        responseText.classList.add("hidden");
+
+        // Handle loading state
+        if (state === "loading") {
+          submitBtn.disabled = true;
+          buttonText.textContent = "Uploading...";
+          spinner.classList.remove("hidden");
+          messageBox.classList.add("hidden");
+          return;
+        }
+
+        // Handle complete state
+        submitBtn.disabled = false;
+        buttonText.textContent = "Upload PDF";
+        spinner.classList.add("hidden");
+
+        if (state === "success") {
+          messageBox.classList.add("bg-green-100");
+          messageText.classList.add("text-green-800");
+          messageText.textContent = "Success: " + message;
+        } else if (state === "error") {
+          messageBox.classList.add("bg-red-100");
+          messageText.classList.add("text-red-800");
+          messageText.textContent = "Error: " + message;
+        }
+
+        // Display response data if available
+        if (responseData) {
+          responseText.classList.remove("hidden");
+          responseText.textContent = JSON.stringify(responseData, null, 2);
+        } else {
+          responseText.classList.add("hidden");
+        }
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // 1. Check if a file is selected
+        const file = fileInput.files[0];
+        if (!file) {
+          updateUI("error", "Please select a file first.");
+          return;
+        }
+
+        // 2. Check file type (Client-side validation)
+        if (file.type !== "application/pdf") {
+          updateUI(
+            "error",
+            `Invalid file type: ${file.type}. Please select a PDF file.`
+          );
+          // Clear the file input for security/user experience
+          fileInput.value = "";
+          return;
+        }
+
+        updateUI("loading");
+
+        // 3. Create FormData object
+        const formData = new FormData();
+        // The field name 'pdfFile' must match the name expected by Multer on the server-side
+        formData.append("pdf", file);
+
+        try {
+          // 4. Send the file using the fetch API
+          const response = await fetch(UPLOAD_URL, {
+            method: "POST",
+            body: formData,
+            headers: {
+              authorization:
+                "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTMsImVtYWlsIjoid2FuZWV4d0BnbWFpbC5jb20iLCJ0b2tlblZlcnNpb24iOjAsInRva2VuVHlwZSI6ImFjY2Vzc190b2tlbiIsImlhdCI6MTc2MTY0NzM2MCwiZXhwIjoxNzY0MjM5MzYwfQ.uvsOJ96161D-RBpjFAjgEZ4NwaYUz_FrMxCscr_T-0o",
+            },
+          });
+
+          // 5. Handle response based on Content-Type
+          let responseData;
+          const contentType = response.headers.get("Content-Type");
+
+          if (contentType && contentType.includes("application/json")) {
+            responseData = await response.json();
+          } else if (contentType && contentType.includes("text/plain")) {
+            responseData = { raw: await response.text() };
+          } else {
+            // Fallback for non-JSON/text responses
+            responseData = {
+              status: response.status,
+              statusText: response.statusText,
+              message: "Response received, but not in JSON/Text format.",
+            };
+          }
+
+          if (response.ok) {
+            // Successful upload (2xx status codes)
+            updateUI(
+              "success",
+              `File sent successfully! Server responded with status ${response.status}.`,
+              responseData
+            );
+          } else {
+            // Server returned an error (4xx or 5xx status codes)
+            const errorMessage =
+              responseData && responseData.message
+                ? responseData.message
+                : `Server responded with ${response.status} ${response.statusText}`;
+            updateUI("error", errorMessage, responseData);
+          }
+        } catch (error) {
+          // Handle network errors (server down, CORS issue, etc.)
+          console.error("Network or Fetch Error:", error);
+          updateUI(
+            "error",
+            "Could not reach the server. Please ensure your Node.js server is running on http://localhost:3000.",
+            { details: error.message }
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

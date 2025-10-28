@@ -4,9 +4,20 @@ const universalTemplate = require("../../../utils/universalTemplate");
 const jobMatchStructure = require("../../../utils/jobMatchStructure");
 const latexStructure = require("../../../utils/latexStructure");
 const { cleanResume } = require("../../../utils/resumeCleaner");
+const {
+  saveJsonResumeToBucket,
+  readJsonFileFromGCP,
+} = require("../../../utils/googleBucketHelper");
 const { default: axios } = require("axios");
+const userRepository = require("../../../repositories/userRepository");
 
-exports.createResumeTemplate = async (pdfBuffer, mimeType) => {
+//helpers
+const find_user_by_id = async (userId) => {
+  const user = await userRepository.findById(userId);
+  return user;
+};
+
+exports.createResumeTemplate = async (pdfBuffer, mimeType, userId) => {
   const ai = new GoogleGenAI({});
   const fileMimeType = mimeType || "application/pdf";
   try {
@@ -46,7 +57,11 @@ exports.createResumeTemplate = async (pdfBuffer, mimeType) => {
       response.candidates?.[0]?.content?.parts?.[0]?.text;
 
     await ai.files.delete({ name: file.name });
-
+    const jsonContent = JSON.parse(textOutput);
+    const user = await find_user_by_id(userId);
+    await saveJsonResumeToBucket(jsonContent, user.email);
+    user.uploadedResume = true;
+    userRepository.save(user);
     return JSON.parse(textOutput);
   } catch (error) {
     console.error("❌ Error creating resume template:", error);
@@ -54,7 +69,10 @@ exports.createResumeTemplate = async (pdfBuffer, mimeType) => {
   }
 };
 
-exports.createResumeJobAnalysis = async (job_description, json_resume) => {
+exports.createResumeJobAnalysis = async (job_description, userId) => {
+  const user = await find_user_by_id(userId);
+  const user_json_file = readJsonFileFromGCP(user.email);
+
   const ai = new GoogleGenAI({});
   try {
     const analysisPrompt = `
@@ -64,7 +82,7 @@ exports.createResumeJobAnalysis = async (job_description, json_resume) => {
       **Job Description (JD):**
       ${job_description}
       **RESUME JSON**
-      ${JSON.stringify(json_resume)}
+      ${user_json_file}
 
       **CRITICAL INSTRUCTION:** Generate the complete analysis using the
       'job_match_analysis' schema/function. For the 'critical_missing_skills',
@@ -95,30 +113,35 @@ exports.createResumeJobAnalysis = async (job_description, json_resume) => {
     throw new Error("Failed to process job analysis with Google GenAI.");
   }
 };
-exports.createTailoredResume = async (job_description, json_resume) => {
+exports.createTailoredResume = async (job_description, userId) => {
+  const user = await find_user_by_id(userId);
+  const user_json_file = readJsonFileFromGCP(user.email);
   const ai = new GoogleGenAI({});
   try {
     const resumeCreatorPrompt = `
-You are a LaTeX resume creator. Your task is to generate a new resume using the provided JSON resume data, tailoring it to match the given job description.
+    You are a LaTeX resume creator. Your task is to generate a new resume using the provided JSON resume data, tailoring it to match the given job description.
 
-**Job Description (JD):**
-${job_description}
+    **Job Description (JD):**
+    ${job_description}
 
-**JSON Resume Data (JS):**
-${JSON.stringify(json_resume)}
+    **JSON Resume Data (JS):**
+    ${user_json_file}
 
-**Target LaTeX Structure (LS):**
-${latexStructure}
+    **Target LaTeX Structure (LS):**
+    ${latexStructure}
 
-**Instructions:**
-1. IT MUST BE ATS FRIENDLY
-2. Rephrase and reorganize the information from the JSON resume to align with the job description. 
-3. Do NOT add any new information that is not present in the JSON data.
-4. Follow the target LaTeX structure exactly. Only include fields present in the JSON; if a field is missing in the JSON, omit it from the final resume.
-5. If the LaTeX structure requires additional fields for clarity or completeness, include them but only using data from the JSON.
-6. Ensure the output is a valid LaTeX resume that is optimized for the specified job.
+    **Instructions:**
+    1. IT MUST BE ATS FRIENDLY
+    2. Rephrase and reorganize the information from the JSON resume to align with the job description.
+    3. Do NOT add any new information that is not present in the JSON data.
+    4. Use the infomation in the JSON File and Override the info in the target LaTeX structure
+    5. Follow the target LaTeX structure exactly. Only include fields present in the JSON; if a field is missing in the JSON, do not include it in the final resume.
+    6. If the LaTeX structure requires additional fields for clarity or completeness, include them but only using data from the JSON.
+    7. Ensure the output is a valid LaTeX resume that is optimized for the specified job.
+    8.Do not add explanations or commentary—only write the resume text.
+    9.!!Do not ADD COMMENTARY AND EXPLANATIONS TO NON OF TEXTS IN THE LATEX RESUME
 
-`;
+    `;
 
     const response = await ai.models.generateContent({
       model: "gemini-flash-lite-latest",
@@ -140,94 +163,41 @@ ${latexStructure}
     textOutput = textOutput.substring(index);
     const end = textOutput.indexOf("```");
     textOutput = textOutput.substring(0, end).trim();
-    console.log("uncleaned : ", cleanResume(textOutput));
+    //console.log("uncleaned : ", cleanResume(textOutput));
     const cleanedLatex = cleanResume(textOutput);
-    const res = await generatePDF(cleanedLatex, "wanewa Netshodwe");
+    const res = await generatePDF(
+      cleanedLatex,
+      `${user.fullNames} ${user.surname}`,
+      user.email,
+      job_description
+    );
     return res;
   } catch (error) {
     console.error("❌ Error creating job analysis:", error);
     throw new Error("Failed to process job analysis with Google GenAI.");
   }
 };
-const generatePDF = async (latex, fullname) => {
-  // Ensure the filename ends with .pdf
-  const filename = fullname.endsWith(".pdf") ? fullname : fullname + ".pdf";
-
+const generatePDF = async (latex, fullname, email, job_description) => {
+  const filename = fullname;
   try {
-    // --- API Consumption ---
     const res = await axios.post(
-      "http://localhost:6000/create",
+      "https://resume.thewoo.online/gen-api/resume/generate",
       {
         fullName: filename,
         texContent: latex,
-      },
-      {
-        // CRITICAL: Tell Axios to treat the response as binary data (Blob)
-        responseType: "blob",
+        email: email,
+        job_description: job_description,
       }
     );
 
     if (res.status === 200 && res.data) {
-      // 1. Create a Blob object from the response data
-      const pdfBlob = new Blob([res.data], { type: "application/pdf" });
-
-      // 2. Create a temporary URL for the blob
-      const downloadUrl = window.URL.createObjectURL(pdfBlob);
-
-      // 3. Create a temporary anchor element to trigger the download
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.setAttribute("download", filename); // Set the desired filename
-
-      // 4. Append and click the link to start the download
-      document.body.appendChild(link);
-      link.click();
-
-      // 5. Clean up the temporary link and URL
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-
-      console.log(
-        `✅ PDF successfully generated and download started for: ${filename}`
-      );
-      return; // Success, return nothing
-    } else {
-      // Should be caught by the catch block, but included for safety
       return {
-        message: "Received unexpected status code.",
+        message: "Resume send to your email",
         status: res.status,
-        error: "Unexpected server response.",
       };
     }
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      // Handle HTTP errors returned by the server
-      if (err.response && err.response.data) {
-        // Since responseType was 'blob', we need to read the error message
-        // from the error blob asynchronously to display a helpful message.
-        // For a synchronous return, we'll return a generic error and log details.
-        const errorBlob = err.response.data;
-        const reader = new FileReader();
-
-        // Log the details from the error response data
-        reader.onload = function () {
-          try {
-            const errorData = JSON.parse(reader.result);
-            console.error(
-              "❌ API Compilation Error:",
-              errorData.error,
-              errorData.details
-            );
-          } catch (e) {
-            console.error(
-              "❌ API Error: Could not parse server error message."
-            );
-          }
-        };
-        reader.readAsText(errorBlob);
-      }
-
-      // Return the simplified error object as defined in your original snippet
       return {
         message:
           "Something went wrong during PDF generation. See console for details.",
@@ -235,7 +205,6 @@ const generatePDF = async (latex, fullname) => {
         error: err.message,
       };
     }
-    // Handle non-Axios errors
     return {
       message: "An unexpected client-side error occurred.",
       status: 500,
