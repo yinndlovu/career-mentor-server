@@ -1,12 +1,7 @@
 const { Storage } = require("@google-cloud/storage");
 const path = require("path");
 
-const keyFilename = path.join(
-  __dirname,
-  "..",
-  "cloud_keys",
-  "thewoo-2cb2d5ae45cc.json"
-);
+const keyFilename = "/etc/secrets/thewoo-2cb2d5ae45cc.json";
 const storage = new Storage({ keyFilename });
 const bucketName = process.env.GCS_BUCKET_NAME;
 
