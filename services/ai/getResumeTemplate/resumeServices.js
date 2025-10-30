@@ -20,6 +20,7 @@ const find_user_by_id = async (userId) => {
 exports.createResumeTemplate = async (pdfBuffer, mimeType, userId) => {
   const ai = new GoogleGenAI({});
   const fileMimeType = mimeType || "application/pdf";
+
   try {
     const fileObject = new Blob([pdfBuffer], { type: fileMimeType });
 
@@ -113,8 +114,9 @@ exports.createResumeJobAnalysis = async (job_description, userId) => {
     throw new Error("Failed to process job analysis with Google GenAI.");
   }
 };
+
 exports.createTailoredResume = async (job_description, userId) => {
-  const user = await find_user_by_id(17);
+  const user = await find_user_by_id(userId);
   const user_json_file = await readJsonFileFromGCP(user.email);
 
   const ai = new GoogleGenAI({});
@@ -131,21 +133,20 @@ exports.createTailoredResume = async (job_description, userId) => {
     **Target LaTeX Structure (LS):**
     ${latexStructure}
 
-    **VERY IMPORTANT
-    DO NOT ADD COMMENTARY OR EXPLAIN ANYTHING  THIS IS A RESUME! 
-
     **Instructions:**
     1. IT MUST BE ATS FRIENDLY
-    2. DO NOT USE ANY OF THE TEXT IN THE LATEX STRUCTURE USE THE DATA IN THE JSON RESUNE INSTEAD
+    2. DO NOT USE ANY OF THE TEXT IN THE LATEX STRUCTURE USE THE DATA IN THE JSON RESUME INSTEAD
     3. Rephrase and reorganize the information from the JSON resume to align with the job description.
     4. Do NOT add any new information that is not present in the JSON data.
     5. Use the infomation in the JSON File and Override the info in the target LaTeX structure
     6. Follow the target LaTeX structure exactly. Only include fields present in the JSON; if a field is missing in the JSON, do not include it in the final resume.
     7. If the LaTeX structure requires additional fields for clarity or completeness, include them but only using data from the JSON.
     8. Ensure the output is a valid LaTeX resume that is optimized for the specified job.
-    9.Do not add explanations or commentary—only write the resume text.
-    10.!!Do not ADD COMMENTARY AND EXPLANATIONS TO NON OF TEXTS IN THE LATEX RESUME
-
+    9. Do not add explanations or commentary—only write the resume text.
+    10. Don not add unnecessary infer and comments to things such as tech, for example if it's C# just put C# rather rather putting C# and extra text about it in brakets.
+    11. Do not ADD COMMENTARY AND EXPLANATIONS TO NON OF TEXTS IN THE LATEX RESUME
+    12. For education and experience dates, if only one of start_date or end_date is present in the JSON, display only that date (do NOT generate or infer a range). Only display a date range if both start_date and end_date are provided.
+    13. If the JSON resume data does not have a summary, about, or objectives section, then omit the summary section entirely from the generated LaTeX resume.
     `;
 
     const response = await ai.models.generateContent({
@@ -184,8 +185,10 @@ exports.createTailoredResume = async (job_description, userId) => {
     throw new Error("Failed to process job analysis with Google GenAI.");
   }
 };
+
 const generatePDF = async (latex, fullname, email, job_description) => {
   const filename = fullname;
+
   try {
     const res = await axios.post(
       "https://resume.thewoo.online/gen-api/resume/generate",

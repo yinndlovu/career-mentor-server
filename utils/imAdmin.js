@@ -1,9 +1,6 @@
 const secretPhrase = "imadminletmein";
 
-
 exports.isKeyValid = (key) => {
-  
-
   try {
     const decodedKeyStr = Buffer.from(key, "base64").toString("utf-8");
     if (decodedKeyStr === secretPhrase) {
