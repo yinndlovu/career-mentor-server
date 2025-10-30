@@ -71,7 +71,7 @@ exports.createResumeTemplate = async (pdfBuffer, mimeType, userId) => {
 
 exports.createResumeJobAnalysis = async (job_description, userId) => {
   const user = await find_user_by_id(userId);
-  const user_json_file = readJsonFileFromGCP(user.email);
+  const user_json_file = await readJsonFileFromGCP(user.email);
 
   const ai = new GoogleGenAI({});
   try {
@@ -114,8 +114,9 @@ exports.createResumeJobAnalysis = async (job_description, userId) => {
   }
 };
 exports.createTailoredResume = async (job_description, userId) => {
-  const user = await find_user_by_id(userId);
-  const user_json_file = readJsonFileFromGCP(user.email);
+  const user = await find_user_by_id(17);
+  const user_json_file = await readJsonFileFromGCP(user.email);
+
   const ai = new GoogleGenAI({});
   try {
     const resumeCreatorPrompt = `
@@ -130,16 +131,20 @@ exports.createTailoredResume = async (job_description, userId) => {
     **Target LaTeX Structure (LS):**
     ${latexStructure}
 
+    **VERY IMPORTANT
+    DO NOT ADD COMMENTARY OR EXPLAIN ANYTHING  THIS IS A RESUME! 
+
     **Instructions:**
     1. IT MUST BE ATS FRIENDLY
-    2. Rephrase and reorganize the information from the JSON resume to align with the job description.
-    3. Do NOT add any new information that is not present in the JSON data.
-    4. Use the infomation in the JSON File and Override the info in the target LaTeX structure
-    5. Follow the target LaTeX structure exactly. Only include fields present in the JSON; if a field is missing in the JSON, do not include it in the final resume.
-    6. If the LaTeX structure requires additional fields for clarity or completeness, include them but only using data from the JSON.
-    7. Ensure the output is a valid LaTeX resume that is optimized for the specified job.
-    8.Do not add explanations or commentary—only write the resume text.
-    9.!!Do not ADD COMMENTARY AND EXPLANATIONS TO NON OF TEXTS IN THE LATEX RESUME
+    2. DO NOT USE ANY OF THE TEXT IN THE LATEX STRUCTURE USE THE DATA IN THE JSON RESUNE INSTEAD
+    3. Rephrase and reorganize the information from the JSON resume to align with the job description.
+    4. Do NOT add any new information that is not present in the JSON data.
+    5. Use the infomation in the JSON File and Override the info in the target LaTeX structure
+    6. Follow the target LaTeX structure exactly. Only include fields present in the JSON; if a field is missing in the JSON, do not include it in the final resume.
+    7. If the LaTeX structure requires additional fields for clarity or completeness, include them but only using data from the JSON.
+    8. Ensure the output is a valid LaTeX resume that is optimized for the specified job.
+    9.Do not add explanations or commentary—only write the resume text.
+    10.!!Do not ADD COMMENTARY AND EXPLANATIONS TO NON OF TEXTS IN THE LATEX RESUME
 
     `;
 
@@ -158,13 +163,15 @@ exports.createTailoredResume = async (job_description, userId) => {
     let textOutput =
       response.output_text ||
       response.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (textOutput.includes("```")) {
+      const index = textOutput.indexOf("```") + 8;
+      textOutput = textOutput.substring(index);
+      const end = textOutput.indexOf("```");
+      textOutput = textOutput.substring(0, end).trim();
+    }
 
-    const index = textOutput.indexOf("```") + 8;
-    textOutput = textOutput.substring(index);
-    const end = textOutput.indexOf("```");
-    textOutput = textOutput.substring(0, end).trim();
-    //console.log("uncleaned : ", cleanResume(textOutput));
     const cleanedLatex = cleanResume(textOutput);
+    console.log("response is  : ", cleanedLatex);
     const res = await generatePDF(
       cleanedLatex,
       `${user.fullNames} ${user.surname}`,

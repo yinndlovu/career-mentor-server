@@ -1,3 +1,6 @@
+// this is to add the routes to the testing api for the desktop app
+//DO NOT DELETE it does not affect the routes
+
 const {
   getEndpointName,
   getEndpointDescription,
@@ -11,7 +14,6 @@ const isAdminRequest = async (req, res, next) => {
   if (!authHeader) {
     next();
   } else {
- 
     if (!isKeyValid(authHeader)) {
       res.status(403).json({ message: "incorrect key" });
       return;
