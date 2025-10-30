@@ -1,5 +1,6 @@
 module.exports = `
 
+
 \\documentclass[letterpaper,11pt]{article}
 
 %---------------------
@@ -73,13 +74,14 @@ module.exports = `
 \\begin{document}
 %------ HEADER ------
 \\begin{center}
-    \\textbf{\\Huge \\scshape Your Name Here } \\
+    \\textbf{\\Huge \\scshape Your Name Here } \\\\[2pt] 
+    
     \\small (Phone Number) $|$ \\href{mailto:your@email.com}{\\underline{your@email.com}} $|$ \\href{linkedin.com/in/your-link}{\\underline{linkedin.com/in/your-link}} $|$ \\href{https://your-portfolio-link.com}{\\underline{your-portfolio-link.com}} \\
 \\end{center}
 %------ SUMMARY ------
 \\section{Summary}
 \\resumeSubHeadingListStart
-\\item [Summary or objective statement here]
+\\item Summary or objective statement here
 \\resumeSubHeadingListEnd
 %------ EDUCATION ------
 \\section{Education}

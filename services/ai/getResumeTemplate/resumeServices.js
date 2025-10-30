@@ -146,7 +146,10 @@ exports.createTailoredResume = async (job_description, userId) => {
     10. Don not add unnecessary infer and comments to things such as tech, for example if it's C# just put C# rather rather putting C# and extra text about it in brakets.
     11. Do not ADD COMMENTARY AND EXPLANATIONS TO NON OF TEXTS IN THE LATEX RESUME
     12. For education and experience dates, if only one of start_date or end_date is present in the JSON, display only that date (do NOT generate or infer a range). Only display a date range if both start_date and end_date are provided.
-    13. If the JSON resume data does not have a summary, about, or objectives section, then omit the summary section entirely from the generated LaTeX resume.
+    13. If the JSON resume data summary is null  then omit the summary section entirely from the final latex resume.
+    14. if the JSON resume data does not have some of the data in the header omit the fields that dont have data in the final latex resume
+    15. if some of the field in the JSON resume is null the omit its corresponding field in the final latex resume.
+    16. if they are some Fields in the JSON Resume Data that are Not in the Latex STructure Add Them As A New Section Only if This Fields Are Not NUll
     `;
 
     const response = await ai.models.generateContent({
@@ -172,7 +175,6 @@ exports.createTailoredResume = async (job_description, userId) => {
     }
 
     const cleanedLatex = cleanResume(textOutput);
-    console.log("response is  : ", cleanedLatex);
     const res = await generatePDF(
       cleanedLatex,
       `${user.fullNames} ${user.surname}`,
