@@ -1,3 +1,1 @@
-module.exports = async function userRecommendedJobs(user_resume){
-
-}
+module.exports = async function userRecommendedJobs(user_resume) {};

@@ -1,13 +1,16 @@
 const { Storage } = require("@google-cloud/storage");
-const path = require("path");
 
-const keyFilename = path.join(
-  __dirname,
-  "..",
-  "cloud_keys",
-  "thewoo-2cb2d5ae45cc.json"
-);
-const storage = new Storage({ keyFilename });
+let storage;
+
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  storage = new Storage();
+} else if (process.env.GOOGLE_CLOUD_KEY_JSON) {
+  const credentials = JSON.parse(process.env.GOOGLE_CLOUD_KEY_JSON);
+  storage = new Storage({ credentials });
+} else {
+  throw new Error("Google Cloud credentials are not set.");
+}
+
 const bucketName = process.env.GCS_BUCKET_NAME;
 
 exports.saveJsonResumeToBucket = async (jsonContent, email) => {
