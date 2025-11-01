@@ -8,10 +8,10 @@ const audioLengthValidation = async (req, res, next) => {
     });
     return;
   }
-  const userId = req.user.id;
-  const hasSubscription = await userHasActiveSubscription(userId);
-  const max_length = hasSubscription ? 5000 : 2000;
-  const audio_path = req.file.path;
+  //   const userId = req.user.id;
+  //   const hasSubscription = await userHasActiveSubscription(userId);
+  //   const max_length = hasSubscription ? 5000 : 2000;
+  //   const audio_path = req.file.path;
 
   try {
     const audio_metadata = await mm.parseFile(audio_path);
@@ -19,9 +19,9 @@ const audioLengthValidation = async (req, res, next) => {
     if (audio_duration === undefined) {
       throw new Error("the audio was undefined");
     }
-    if (audio_duration > max_length) {
+    if (audio_duration > 3000) {
       res.status(403).json({
-        message: `based on your subscription status the max length of audio allowed is ${max_length / 1000} minutes `,
+        message: `based on your subscription status the max length of audio allowed is ${3000 / 1000} minutes `,
       });
       return;
     }
@@ -34,4 +34,4 @@ const audioLengthValidation = async (req, res, next) => {
   }
 };
 
-module.exports = audioLengthValidation
+module.exports = audioLengthValidation;

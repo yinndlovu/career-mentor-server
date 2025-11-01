@@ -11,6 +11,7 @@ const aiRoutes = require("./routes/ai/aiRoutes");
 const userRoutes = require("./routes/user/userRoutes");
 const isAdminRequest = require("./middlewares/isAdminRequest");
 
+
 const app = express();
 app.use(cors());
 app.use(express.json());
