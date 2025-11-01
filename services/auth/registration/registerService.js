@@ -60,7 +60,7 @@ exports.register = async (fullNames, surname, email, password) => {
     hashedPassword
   );
 
-  const { otp, hashedOtp } = generateOtp();
+  const { otp, hashedOtp } = await generateOtp();
 
   await otpRepository.upsertOtp(
     hashedOtp,

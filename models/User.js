@@ -35,6 +35,11 @@ const User = sequelize.define("User", {
     allowNull: false,
     defaultValue: false,
   },
+  uploadedResume: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
   tokenVersion: {
     type: DataTypes.INTEGER,
     allowNull: false,

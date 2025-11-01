@@ -1,12 +1,26 @@
-
 const { Blob } = require("buffer");
 const { GoogleGenAI } = require("@google/genai");
 const universalTemplate = require("../../../utils/universalTemplate");
 const jobMatchStructure = require("../../../utils/jobMatchStructure");
+const latexStructure = require("../../../utils/latexStructure");
+const { cleanResume } = require("../../../utils/resumeCleaner");
+const {
+  saveJsonResumeToBucket,
+  readJsonFileFromGCP,
+} = require("../../../utils/googleBucketHelper");
+const { default: axios } = require("axios");
+const userRepository = require("../../../repositories/userRepository");
 
-exports.createResumeTemplate = async (pdfBuffer, mimeType) => {
+//helpers
+const find_user_by_id = async (userId) => {
+  const user = await userRepository.findById(userId);
+  return user;
+};
+
+exports.createResumeTemplate = async (pdfBuffer, mimeType, userId) => {
   const ai = new GoogleGenAI({});
   const fileMimeType = mimeType || "application/pdf";
+
   try {
     const fileObject = new Blob([pdfBuffer], { type: fileMimeType });
 
@@ -44,7 +58,11 @@ exports.createResumeTemplate = async (pdfBuffer, mimeType) => {
       response.candidates?.[0]?.content?.parts?.[0]?.text;
 
     await ai.files.delete({ name: file.name });
-
+    const jsonContent = JSON.parse(textOutput);
+    const user = await find_user_by_id(userId);
+    await saveJsonResumeToBucket(jsonContent, user.email);
+    user.uploadedResume = true;
+    userRepository.save(user);
     return JSON.parse(textOutput);
   } catch (error) {
     console.error("❌ Error creating resume template:", error);
@@ -52,7 +70,10 @@ exports.createResumeTemplate = async (pdfBuffer, mimeType) => {
   }
 };
 
-exports.createResumeJobAnalysis = async (job_description, json_resume) => {
+exports.createResumeJobAnalysis = async (job_description, userId) => {
+  const user = await find_user_by_id(userId);
+  const user_json_file = await readJsonFileFromGCP(user.email);
+
   const ai = new GoogleGenAI({});
   try {
     const analysisPrompt = `
@@ -62,7 +83,7 @@ exports.createResumeJobAnalysis = async (job_description, json_resume) => {
       **Job Description (JD):**
       ${job_description}
       **RESUME JSON**
-      ${JSON.stringify(json_resume)}
+      ${user_json_file}
 
       **CRITICAL INSTRUCTION:** Generate the complete analysis using the
       'job_match_analysis' schema/function. For the 'critical_missing_skills',
@@ -91,5 +112,115 @@ exports.createResumeJobAnalysis = async (job_description, json_resume) => {
   } catch (error) {
     console.error("❌ Error creating job analysis:", error);
     throw new Error("Failed to process job analysis with Google GenAI.");
+  }
+};
+
+exports.createTailoredResume = async (job_description, userId) => {
+  const user = await find_user_by_id(userId);
+  const user_json_file = await readJsonFileFromGCP(user.email);
+
+  const ai = new GoogleGenAI({});
+  try {
+    const resumeCreatorPrompt = `
+    You are a LaTeX resume creator. Your task is to generate a new resume using the provided JSON resume data, tailoring it to match the given job description.
+
+    **Job Description (JD):**
+    ${job_description}
+
+    **JSON Resume Data (JS):**
+    ${user_json_file}
+
+    **Target LaTeX Structure (LS):**
+    ${latexStructure}
+
+    **Instructions:**
+    1. IT MUST BE ATS FRIENDLY
+    2. DO NOT USE ANY OF THE TEXT IN THE LATEX STRUCTURE USE THE DATA IN THE JSON RESUME INSTEAD
+    3. Rephrase and reorganize the information from the JSON resume to align with the job description.
+    4. Do NOT add any new information that is not present in the JSON data.
+    5. Use the infomation in the JSON File and Override the info in the target LaTeX structure
+    6. Follow the target LaTeX structure exactly. Only include fields present in the JSON; if a field is missing in the JSON, do not include it in the final resume.
+    7. If the LaTeX structure requires additional fields for clarity or completeness, include them but only using data from the JSON.
+    8. Ensure the output is a valid LaTeX resume that is optimized for the specified job.
+    9. Do not add explanations or commentary—only write the resume text.
+    10. Don not add unnecessary infer and comments to things such as tech, for example if it's C# just put C# rather rather putting C# and extra text about it in brakets.
+    11. Do not ADD COMMENTARY AND EXPLANATIONS TO NON OF TEXTS IN THE LATEX RESUME
+    12. For education and experience dates, if only one of start_date or end_date is present in the JSON, display only that date (do NOT generate or infer a range). Only display a date range if both start_date and end_date are provided.
+    13. If the JSON resume data summary is null  then omit the summary section entirely from the final latex resume.
+    14. if the JSON resume data does not have some of the data in the header omit the fields that dont have data in the final latex resume
+    15. if some of the field in the JSON resume is null the omit its corresponding field in the final latex resume.
+    16. if they are some Fields in the JSON Resume Data that are Not in the Latex STructure Add Them As A New Section Only if This Fields Are Not NUll
+    `;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-lite-latest",
+      contents: [
+        {
+          parts: [{ text: resumeCreatorPrompt }],
+        },
+      ],
+      config: {
+        temperature: 0.1,
+      },
+    });
+
+    let textOutput =
+      response.output_text ||
+      response.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (textOutput.includes("```")) {
+      const index = textOutput.indexOf("```") + 8;
+      textOutput = textOutput.substring(index);
+      const end = textOutput.indexOf("```");
+      textOutput = textOutput.substring(0, end).trim();
+    }
+
+    const cleanedLatex = cleanResume(textOutput);
+    const res = await generatePDF(
+      cleanedLatex,
+      `${user.fullNames} ${user.surname}`,
+      user.email,
+      job_description
+    );
+    return res;
+  } catch (error) {
+    console.error("❌ Error creating job analysis:", error);
+    throw new Error("Failed to process job analysis with Google GenAI.");
+  }
+};
+
+const generatePDF = async (latex, fullname, email, job_description) => {
+  const filename = fullname;
+
+  try {
+    const res = await axios.post(
+      "https://resume.thewoo.online/gen-api/resume/generate",
+      {
+        fullName: filename,
+        texContent: latex,
+        email: email,
+        job_description: job_description,
+      }
+    );
+
+    if (res.status === 200 && res.data) {
+      return {
+        message: "Resume send to your email",
+        status: res.status,
+      };
+    }
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      return {
+        message:
+          "Something went wrong during PDF generation. See console for details.",
+        status: err.response?.status || "Network Error",
+        error: err.message,
+      };
+    }
+    return {
+      message: "An unexpected client-side error occurred.",
+      status: 500,
+      error: err.message,
+    };
   }
 };

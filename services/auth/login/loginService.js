@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+// internal
 const userRepository = require("../../../repositories/userRepository");
 const otpRepository = require("../../../repositories/otpRepository");
 const OtpTypes = require("../../../enums/otpTypes");
@@ -26,7 +27,7 @@ exports.login = async (email, password) => {
   }
 
   if (!user.isVerified) {
-    const { otp, hashedOtp } = generateOtp();
+    const { otp, hashedOtp } = await generateOtp();
 
     await otpRepository.upsertOtp(
       hashedOtp,
@@ -43,7 +44,7 @@ exports.login = async (email, password) => {
     };
   }
 
-  const { otp, hashedOtp } = generateOtp();
+  const { otp, hashedOtp } = await generateOtp();
 
   await otpRepository.upsertOtp(hashedOtp, user.id, OtpTypes.TWO_FACTOR, 10);
   console.log(`LOGIN OTP for ${email}: ${otp}`);

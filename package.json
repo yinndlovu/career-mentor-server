@@ -13,19 +13,20 @@
   "type": "commonjs",
   "dependencies": {
     "@google-cloud/storage": "^7.17.2",
-    "cors": "^2.8.5",
     "@google/genai": "^1.25.0",
-    "uuid": "^13.0.0",
+    "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
-    "multer": "^2.0.2",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "mysql2": "^3.15.2",
     "nodemon": "^3.1.10",
     "sequelize": "^6.37.7",
-    "sequelize-cli": "^6.6.3"
+    "sequelize-cli": "^6.6.3",
+    "uuid": "^13.0.0"
   },
   "overrides": {
     "validator": "^13.11.0"
