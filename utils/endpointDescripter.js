@@ -69,6 +69,13 @@ description_map.set(
 inputs_map.set("/api/ai/resume/tailored", [
   { fieldName: "job_description", typeOfInput: "string" },
 ]);
+//user recommendedJobs
+names_map.set("/api/user/recommemdedJobs", "User Recommeded Jobs");
+description_map.set(
+  "/api/user/recommemdedJobs",
+  "Retrives  Jobs the user is best Suited for "
+);
+inputs_map.set("/api/user/recommemdedJobs", []);
 
 exports.getEndpointName = (url) => {
   return names_map.get(url);

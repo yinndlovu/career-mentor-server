@@ -30,7 +30,7 @@ const isAdminRequest = async (req, res, next) => {
 
     try {
       const result = await axios.post(
-        "http://localhost:4500/api/endpoints",
+        "https://desktop.thewoo.online/api/endpoints",
         requestData
       );
       res.status(201).json({ message: result.data.message });
