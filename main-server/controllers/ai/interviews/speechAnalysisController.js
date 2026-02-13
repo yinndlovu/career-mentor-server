@@ -1,4 +1,4 @@
-const speechAnalysisService = require("../../../services/ai/getResumeTemplate/interviews/speechAnalysisService");
+const speechAnalysisService = require("../../../services/ai/interviews/speechAnalysisService");
 const convertToWav = require("../../../utils/convertToWav");
 
 module.exports = async (req, res) => {
