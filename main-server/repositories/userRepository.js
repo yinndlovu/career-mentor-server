@@ -1,4 +1,4 @@
-const { User } = require("../models");
+const { User } = require("@career-mentor/db-core");
 
 exports.createUser = async (fullNames, surname = null, email, password) => {
   const user = await User.create({
@@ -16,6 +16,7 @@ exports.createUser = async (fullNames, surname = null, email, password) => {
     email: user.email,
   };
 };
+
 exports.userHasActiveSubscription =async(userId)=>{
     const user = await User.findByPk(userId);
     const hasSubscription = user.activeSUbscription === true
