@@ -24,6 +24,7 @@ app.use(isAdminRequest);
 
 const server = http.createServer(app);
 
+// routes
 app.use("/api", authRoutes, aiRoutes, userRoutes);
 
 sequelize
