@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azure Speech Tone Test</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f5f5f5;
+        padding: 30px;
+        text-align: center;
+      }
+      #recordBtn {
+        background: #0078d4;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+      #recordBtn.recording {
+        background: #d40000;
+      }
+      #results {
+        margin-top: 20px;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        text-align: left;
+        width: 60%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      pre {
+        background: #f0f0f0;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🎙️ Azure Speech Prosody / Tone Test</h2>
+    <p>Click the button to record your voice (up to 10 seconds)</p>
+    <button id="recordBtn">🎤 Start Recording</button>
+
+    <div id="results"></div>
+
+    <script>
+      let mediaRecorder;
+      let audioChunks = [];
+      const recordBtn = document.getElementById("recordBtn");
+      const resultsDiv = document.getElementById("results");
+
+      recordBtn.addEventListener("click", async () => {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+          recordBtn.textContent = "🎤 Start Recording";
+          recordBtn.classList.remove("recording");
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "input.webm");
+
+          resultsDiv.innerHTML = "<p>⏳ Uploading and analyzing...</p>";
+
+          try {
+            const response = await fetch(
+              "http://localhost:3600/api/ai/interview/speech-prep",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+            const data = await response.json();
+
+            //     resultsDiv.innerHTML = `
+            //     <h3>🧠 Analysis Results</h3>
+            //     <p><strong>Recognized Text:</strong> ${data.text}</p>
+            //     <p><strong>Accuracy:</strong> ${data.AccuracyScore}</p>
+            //     <p><strong>Fluency:</strong> ${data.FluencyScore}</p>
+            //     <p><strong>Completeness:</strong> ${data.CompletenessScore}</p>
+            //     <p><strong>Prosody (Tone Quality):</strong> ${data.ProsodyScore}</p>
+            //     <pre>${JSON.stringify(data.raw, null, 2)}</pre>
+            //   `;
+          } catch (err) {
+            resultsDiv.innerHTML = `<p style="color:red">❌ Error: ${err.message}</p>`;
+          }
+        };
+
+        mediaRecorder.start();
+        recordBtn.textContent = "⏹ Stop Recording";
+        recordBtn.classList.add("recording");
+        setTimeout(() => {
+          if (mediaRecorder.state === "recording") mediaRecorder.stop();
+        }, 10000); // auto-stop after 10s
+      });
+    </script>
+  </body>
+</html>

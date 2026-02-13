@@ -1,5 +1,7 @@
 node_modules/
+db-core/node_modules/
+main-server/node_modules/
 dist/
-config/config.json
+db-core/config/config.json
 .env
 cloud_keys

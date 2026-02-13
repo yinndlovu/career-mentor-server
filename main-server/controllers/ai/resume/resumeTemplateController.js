@@ -12,6 +12,7 @@ exports.resumeTemplate = async (req, res) => {
   const result = await createResumeTemplate(buffer, mimetype, userId);
   res.status(200).json({ message: "templated created", template: result });
 };
+
 exports.resumeAnalysis = async (req, res) => {
   const userId = req.user.id;
   console.log("endpoint hit analysis");
@@ -19,6 +20,7 @@ exports.resumeAnalysis = async (req, res) => {
   const result = await createResumeJobAnalysis(job_description, userId);
   res.status(200).json({ message: "analysis completed", result: result });
 };
+
 exports.tailoredResume = async (req, res) => {
   const userId = req.user.id;
   const { job_description } = req.body;

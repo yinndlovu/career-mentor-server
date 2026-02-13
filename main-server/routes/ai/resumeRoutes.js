@@ -1,6 +1,6 @@
 const express = require("express");
 
-const resumeController = require("../../controllers/ai/Resumes/resumeTemplateController");
+const resumeController = require("../../controllers/ai/resume/resumeTemplateController");
 const { pdfUploadMiddleware } = require("../../middlewares/verifyPDF");
 const verifyToken = require("../../middlewares/verifyToken");
 const router = express.Router();

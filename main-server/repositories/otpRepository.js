@@ -1,8 +1,7 @@
-const { Otp } = require("../models");
+const { Otp } = require("@career-mentor/db-core");
 
 exports.upsertOtp = async (otp, userId, type, expiryMinutes = 5) => {
   let expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
-
   let otpRecord = await Otp.findOne({ where: { userId, type } });
 
   if (otpRecord) {

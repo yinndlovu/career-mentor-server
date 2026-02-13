@@ -13,6 +13,7 @@ const aiRoutes = require("./routes/ai/aiRoutes");
 const userRoutes = require("./routes/user/userRoutes");
 const isAdminRequest = require("./middlewares/isAdminRequest");
 
+
 const app = express();
 app.set("trust proxy", 1);
 
@@ -23,6 +24,7 @@ app.use(isAdminRequest);
 
 const server = http.createServer(app);
 
+// routes
 app.use("/api", authRoutes, aiRoutes, userRoutes);
 
 sequelize
